@@ -26,15 +26,15 @@ uint8_t out_Rz;
 uint8_t out_hat;
 uint8_t out_butid;
 
-uint8_t LM1 = 22;
-uint8_t LM2 = 23;
-uint8_t RM1 = 25;
-uint8_t RM2 = 31;
+uint8_t LM1 = 23;
+uint8_t LM2 = 25;
+uint8_t RM1 = 31;
+uint8_t RM2 = 22;
 uint8_t LM_Enable = 7;
 uint8_t RM_Enable = 8;
 
 void setup() {
-        Serial.begin(9600);
+        Serial.begin(115200);
 #if !defined(__MIPSEL__)
         while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
 #endif
@@ -76,7 +76,7 @@ void loop() {
           if(out_Y < 5)
           {
             Serial.println("Forward");
-            forward(150, 150);
+            forward(100, 100);
           }
           else if(out_Y > 250)
           {
@@ -86,6 +86,7 @@ void loop() {
           else
           {
             //Serial.println("Stationary");
+            delay(500);
             stop_bot();
           }
         }
@@ -175,6 +176,10 @@ void forward(int LM_PWM, int RM_PWM)
 
   analogWrite(LM_Enable, LM_PWM);
   analogWrite(RM_Enable, RM_PWM);
+
+//  digitalWrite(47, 1);
+//  digitalWrite(49, 0);
+//  analogWrite(6, 100);
 }
 void backward(int LM_PWM, int RM_PWM)
 {
@@ -185,6 +190,11 @@ void backward(int LM_PWM, int RM_PWM)
 
   analogWrite(LM_Enable, LM_PWM);
   analogWrite(RM_Enable, RM_PWM);
+
+  
+  digitalWrite(47, 0);
+  digitalWrite(49, 1);
+  analogWrite(6, 100);
 }
 void right(int PWM)
 {
