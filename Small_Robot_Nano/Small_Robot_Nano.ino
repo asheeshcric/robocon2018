@@ -4,25 +4,18 @@ uint8_t RM1 = 12;
 uint8_t RM2 = 10;
 uint8_t LM_Enable = 6;
 uint8_t RM_Enable = 11;
-uint8_t ESC1 = 3;
-uint8_t ESC2 = 5;
 
 uint8_t Servo_Pin = 9;
 
 uint8_t digitalPin1 = 2;
 uint8_t digitalPin2 = 13;
 
-//For ESCs:
-int STATE=1;
-int Arming_time=00;
-int Pulse=1000;
-
 
 #include <Servo.h>
 Servo myservo;
-Servo esc1;
-Servo esc2;
-int pos = 0;
+Servo esc;
+int pos = 90;
+int step_size = 5;
 
 void setup() {
   // put your setup code here, to run once:
@@ -30,64 +23,45 @@ void setup() {
   pinMode(LM2, OUTPUT);
   pinMode(RM1, OUTPUT);
   pinMode(RM2, OUTPUT);
-  pinMode(ESC1, OUTPUT);
-  pinMode(ESC2, OUTPUT);
+  pinMode(3, OUTPUT);     //For ESC PWM Pin
   pinMode(Servo_Pin, OUTPUT);
   pinMode(LM_Enable, OUTPUT);
   pinMode(RM_Enable, OUTPUT);
   pinMode(digitalPin1, INPUT);
   pinMode(digitalPin2, INPUT);
   
-  
-  myservo.attach(Servo_Pin);
 
-  //Setting up ESC:
-  setup_ESC(ESC1);
-  setup_ESC(ESC2);  
+  esc.attach(3);
+  esc.write(40);
+
+  myservo.attach(Servo_Pin);
+  myservo.write(pos);
+  
   Serial.begin(9600);
 }
 
+
+
+// Main Loop Starts //
 void loop() {
-  for (pos = 0; pos <= 180; pos += 1) {
+  for(int Pulse=1150; Pulse <=1400; Pulse +=1){  
+    digitalWrite(3,HIGH);
+    delayMicroseconds(2000);
+    digitalWrite(3,LOW);
+    delay(20-(2000/1000));
     myservo.write(pos);
-    run_ESC(ESC1);
-    run_ESC(ESC2);   
-    forward(200, 200);         
-  }
-  for (pos = 180; pos >= 0; pos -= 1) {
-    myservo.write(pos);
-    run_ESC(ESC1);
-    run_ESC(ESC2);   
-    forward(200, 200);
-  }
-}
-
-//Function that sets up the ESCs
-void setup_ESC(int pin){
-  for(Arming_time=0; Arming_time<500;Arming_time += 1)
-   {  digitalWrite(pin,HIGH);
-      delayMicroseconds(1100);
-      digitalWrite(pin,LOW);
-      delay(20-(Pulse/1000));
-   }
-}
-
-//Function to run the ESC motors:
-void run_ESC(int pin){
-  for( Pulse=1150; Pulse <=1400; Pulse +=1)
- {  digitalWrite(pin,HIGH);
-    delayMicroseconds(Pulse);
-    digitalWrite(pin,LOW);
-    delay(20-(Pulse/1000));
+    delay(15);
+    if(pos == 10){
+      step_size = 10;
+    }
+    else if(pos == 150){
+      step_size = -10;
+    }
+    pos = pos + step_size;
  }
-// for( Pulse=1400; Pulse >=1150; Pulse -=1)
-// {  digitalWrite(pin,HIGH);
-//    delayMicroseconds(Pulse);
-//    digitalWrite(pin,LOW);
-//    delay(20-(Pulse/1000));
-// }
+//  mys/ervo.write(90);
 }
-
+// Main Loop Ends //
 
 void line_follower()
 {

@@ -33,6 +33,10 @@ uint8_t RM2 = 22;
 uint8_t LM_Enable = 7;
 uint8_t RM_Enable = 8;
 
+uint8_t LiftM1 = 3;
+uint8_t LiftM2 = 5;
+uint8_t Lift_Enable = 6;
+
 void setup() {
         Serial.begin(115200);
 #if !defined(__MIPSEL__)
@@ -136,12 +140,14 @@ void loop() {
           {
             case 0:
                    Serial.println("Hat: Forward Key Pressed!");
+                   LiftMotor(1);
                    break;
             case 2:
                    Serial.println("Hat: Right Key Pressed!");
                    break;
             case 4:
                    Serial.println("Hat: Backward Key Pressed!");
+                   LiftMotor(0);
                    break;
             case 6:
                    Serial.println("Hat: Left Key Pressed!");
@@ -200,20 +206,20 @@ void right(int PWM)
 {
   digitalWrite(LM1, 1);
   digitalWrite(LM2, 0);
-  digitalWrite(RM1, 1);
+  digitalWrite(RM1, 0);
   digitalWrite(RM2, 1);
 
   analogWrite(LM_Enable, PWM);
-  analogWrite(RM_Enable, 0);
+  analogWrite(RM_Enable, PWM);
 }
 void left(int PWM)
 {
-  digitalWrite(LM1, 1);
+  digitalWrite(LM1, 0);
   digitalWrite(LM2, 1);
   digitalWrite(RM1, 1);
   digitalWrite(RM2, 0);
 
-  analogWrite(LM_Enable, 0);
+  analogWrite(LM_Enable, PWM);
   analogWrite(RM_Enable, PWM);
 }
 void stop_bot()
@@ -227,4 +233,17 @@ void stop_bot()
   analogWrite(RM_Enable, 0);
 }
 
+void LiftMotor(int yes)
+{
+  if(yes == 1){
+    digitalWrite(LiftM1, 1);
+    digitalWrite(LiftM2, 0);
+    analogWrite(Lift_Enable, 100);
+  }
+  else{
+    digitalWrite(LiftM1, 0);
+    digitalWrite(LiftM2, 1);
+    analogWrite(Lift_Enable, 100);
+  }
+}
 
