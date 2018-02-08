@@ -85,12 +85,11 @@ void loop() {
           else if(out_Y > 250)
           {
             Serial.println("Backward");
-            backward(150, 150);
+            backward(100, 100);
           }
           else
           {
             //Serial.println("Stationary");
-            delay(500);
             stop_bot();
           }
         }
@@ -101,12 +100,12 @@ void loop() {
           if(out_Y < 5)
           {
             Serial.println("F-Left");
-            forward(50, 150);
+            forward(50, 100);
           }
           else if(out_Y > 200)
           {
             Serial.println("B-Left");
-            backward(50, 150);
+            backward(50, 100);
           }
           else
           {
@@ -121,11 +120,11 @@ void loop() {
           if(out_Y < 5)
           {
             Serial.println("F-Right");
-            forward(150, 50);         }
+            forward(100, 50);         }
           else if(out_Y > 250)
           {
             Serial.println("B-Right");
-            backward(150, 50);
+            backward(100, 50);
           }
           else
           {
@@ -183,9 +182,6 @@ void forward(int LM_PWM, int RM_PWM)
   analogWrite(LM_Enable, LM_PWM);
   analogWrite(RM_Enable, RM_PWM);
 
-//  digitalWrite(47, 1);
-//  digitalWrite(49, 0);
-//  analogWrite(6, 100);
 }
 void backward(int LM_PWM, int RM_PWM)
 {
@@ -224,6 +220,7 @@ void left(int PWM)
 }
 void stop_bot()
 {
+  delay(400);
   digitalWrite(LM1, 1);
   digitalWrite(LM2, 1);
   digitalWrite(RM1, 1);

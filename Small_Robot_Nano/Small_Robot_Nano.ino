@@ -31,11 +31,12 @@ void setup() {
   pinMode(digitalPin2, INPUT);
   
 
-  esc.attach(3);
-  esc.write(40);
-
   myservo.attach(Servo_Pin);
   myservo.write(pos);
+  
+  esc.attach(3);
+  esc.writeMicroseconds(300);
+  delay(2000);
   
   Serial.begin(9600);
 }
@@ -44,22 +45,17 @@ void setup() {
 
 // Main Loop Starts //
 void loop() {
-  for(int Pulse=1150; Pulse <=1400; Pulse +=1){  
-    digitalWrite(3,HIGH);
-    delayMicroseconds(2000);
-    digitalWrite(3,LOW);
-    delay(20-(2000/1000));
-    myservo.write(pos);
-    delay(15);
-    if(pos == 10){
-      step_size = 10;
-    }
-    else if(pos == 150){
-      step_size = -10;
-    }
-    pos = pos + step_size;
- }
-//  mys/ervo.write(90);
+  esc.writeMicroseconds(1320);
+  if(pos == 0){
+    step_size = 10;
+  }
+  else if(pos == 160){
+    step_size = -10;
+  }
+  pos = pos + step_size;
+  myservo.write(pos);
+  line_follower();
+  delay(15);
 }
 // Main Loop Ends //
 
