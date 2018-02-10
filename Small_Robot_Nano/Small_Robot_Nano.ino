@@ -55,6 +55,7 @@ void loop() {
   pos = pos + step_size;
   myservo.write(pos);
   line_follower();
+  forward(255, 255);
   delay(15);
 }
 // Main Loop Ends //
@@ -66,7 +67,16 @@ void line_follower()
   int s3 = analogRead(A5);
   int s4 = analogRead(A4);
   int s5 = analogRead(A3);
-//  Serial.println(s1,s2,s3,s4,s5);/
+  Serial.print(s1);
+  Serial.print(" ");
+  Serial.print(s2);
+  Serial.print(" ");
+  Serial.print(s3);
+  Serial.print(" ");
+  Serial.print(s4);
+  Serial.print(" ");
+  Serial.print(s5);
+  Serial.println(" ");
 }
 
 void forward(int LM_PWM, int RM_PWM)
