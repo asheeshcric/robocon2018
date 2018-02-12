@@ -132,12 +132,12 @@ void loop() {
     if (out_X > 110 && out_X < 135 && out_Y > 110 && out_Y < 135 && out_Z1 < 50){
       // Lift Motor goes up
       Serial.println("Lift Motor Goes UP");
-      LiftMotor(1, 200);
+      LiftMotor(1, 255);
     }
     else if (out_X > 110 && out_X < 135 && out_Y > 110 && out_Y < 135 && out_Z1 > 180){
       // Lift Motor goes down
       Serial.println("Lift Motor Goes DOWN");
-      LiftMotor(0, 200);
+      LiftMotor(0, 255);
     }
     else if (out_X < 10 && out_Y < 10 && out_Z1 < 10){
       // Forward-Left
@@ -172,12 +172,12 @@ void loop() {
     else if (out_X > 120 && out_X < 130 && out_Y < 10 && out_Z1 > 120 && out_Z1 < 130){
       // Forward
       Serial.println("Forward");
-      forward(150, 150);
+      forward(100, 100);
     }
     else if (out_X > 120 && out_X < 130 && out_Y > 200 && out_Z1 > 120 && out_Z1 < 130){
         // Backward
         Serial.println("Backward");
-        backward(150, 150);
+        backward(100, 100);
     }
     else {
       stop_bot();

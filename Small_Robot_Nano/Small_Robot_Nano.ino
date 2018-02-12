@@ -7,8 +7,10 @@ uint8_t RM_Enable = 11;
 
 uint8_t Servo_Pin = 9;
 
-uint8_t digitalPin1 = 2;
-uint8_t digitalPin2 = 13;
+uint8_t digitalPin1 = 2;    // For LineFollower
+uint8_t digitalPin2 = 13;   // For Cleaning Solar Panel
+
+uint8_t MODE = 0;           // To decide the mode in which the robot operates
 
 
 #include <Servo.h>
@@ -29,6 +31,7 @@ void setup() {
   pinMode(RM_Enable, OUTPUT);
   pinMode(digitalPin1, INPUT);
   pinMode(digitalPin2, INPUT);
+  MODE = 0;   // For STOP MODE
   
 
   myservo.attach(Servo_Pin);
@@ -45,23 +48,64 @@ void setup() {
 
 // Main Loop Starts //
 void loop() {
+  if (digitalRead(digitalPin1) == 1) {
+    MODE = 1; // Line following Mode
+    Serial.println("MODE 1 Selected - Line Following Mode.........");
+  }
+  if (digitalRead(digitalPin2) == 1) {
+    MODE = 2; // Panel cleaning Mode
+    Serial.println("MODE 2 Selected - Panel Cleaning Mode.........");
+  }
+  decide_Mode();    // Operating the robot according to the MODE setup
+  
+}
+// Main Loop Ends //
+
+
+
+// Run ESC and Servo
+void EscServo() {
   esc.writeMicroseconds(1320);
   if(pos == 0){
     step_size = 10;
   }
-  else if(pos == 160){
+  else if(pos == 180){
     step_size = -10;
   }
   pos = pos + step_size;
   myservo.write(pos);
-  line_follower();
-  forward(255, 255);
-  delay(15);
 }
-// Main Loop Ends //
 
+
+// Function that defines the operation of the robot according to the MODE
+void decide_Mode() {
+  if (MODE == 1) {
+    EscServo();
+    delay(15);
+    line_follower();
+    Serial.println("Line Following Mode Running......");
+  }
+  else if (MODE == 2) {
+    EscServo();
+    delay(15);
+    clean_panel();
+    Serial.println("Panel Cleaning Mode Running......");
+  }
+  else if (MODE == 10) {
+    adjust_bot();
+    Serial.println("Adjusting the bot on the big robot......");
+  }
+  else {
+    stop_bot();
+    Serial.println("The robot is on STATIONARY MODE........");
+  }
+}
+
+
+// Line Following Mode
 void line_follower()
 {
+  // Code for Line Follower
   int s1 = analogRead(A7);
   int s2 = analogRead(A6);
   int s3 = analogRead(A5);
@@ -77,6 +121,18 @@ void line_follower()
   Serial.print(" ");
   Serial.print(s5);
   Serial.println(" ");
+}
+
+
+// Panel Cleaning Mode
+void clean_panel() {
+  // Code for Cleaning the Solar Panel
+    forward(200, 200);
+}
+
+// Robot Adjust Mode
+void adjust_bot() {
+  // Code for adjusting the bot on the Big Robot
 }
 
 void forward(int LM_PWM, int RM_PWM)
