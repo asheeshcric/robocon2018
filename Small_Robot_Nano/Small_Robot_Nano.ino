@@ -12,6 +12,11 @@ uint8_t digitalPin2 = 13;   // For Cleaning Solar Panel
 
 uint8_t MODE = 0;           // To decide the mode in which the robot operates
 
+unsigned long previousMillis = 0;   // For timing purposes to clean the panel
+const long interval = 2000;         // Interval the robot to move forward and backward
+unsigned long currentMillis;
+int panelMode = 1;                  // For going backward and forward
+
 
 #include <Servo.h>
 Servo myservo;
@@ -54,6 +59,7 @@ void loop() {
   }
   if (digitalRead(digitalPin2) == 1) {
     MODE = 2; // Panel cleaning Mode
+    currentMillis = millis();
     Serial.println("MODE 2 Selected - Panel Cleaning Mode.........");
   }
   decide_Mode();    // Operating the robot according to the MODE setup
@@ -127,7 +133,18 @@ void line_follower()
 // Panel Cleaning Mode
 void clean_panel() {
   // Code for Cleaning the Solar Panel
-    forward(200, 200);
+  if (panelMode == 1) {
+    forward(255, 255);
+  }
+  else if (panelMode == -1) {
+    backward(255, 255);
+  }
+
+  // Changing the panelMode
+  if (currentMillis - previousMillis >= interval) {
+    panelMode = panelMode * -1;
+    previousMillis = currentMillis;
+  }
 }
 
 // Robot Adjust Mode
