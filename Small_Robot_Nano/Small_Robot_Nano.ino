@@ -1,4 +1,4 @@
-uint8_t LM1 = 7;
+.uint8_t LM1 = 7;
 uint8_t LM2 = 8;
 uint8_t RM1 = 12;
 uint8_t RM2 = 10;
@@ -13,10 +13,10 @@ uint8_t digitalPin2 = 13;   // For Cleaning Solar Panel
 uint8_t MODE = 0;           // To decide the mode in which the robot operates
 
 unsigned long previousMillis = 0;   // For timing purposes to clean the panel
-const long interval = 2000;         // Interval the robot to move forward and backward
+const long interval = 1500;         // Interval the robot to move forward and backward
 unsigned long currentMillis;
-int panelMode = 1;                  // For going backward and forward
-
+int panelModeCount = 0;                  // For going changing the operation in the Panel Clean Mode
+int countEndFlag = 0;                    // To determine whether the count cycle is over and needs to restart again or not.
 
 #include <Servo.h>
 Servo myservo;
@@ -60,6 +60,8 @@ void loop() {
   if (digitalRead(digitalPin2) == 1) {
     MODE = 2; // Panel cleaning Mode
     currentMillis = millis();
+    previousMillis = 0;
+    panelModeCount = 0;
     Serial.println("MODE 2 Selected - Panel Cleaning Mode.........");
   }
   decide_Mode();    // Operating the robot according to the MODE setup
@@ -86,7 +88,7 @@ void EscServo() {
 // Function that defines the operation of the robot according to the MODE
 void decide_Mode() {
   if (MODE == 1) {
-    EscServo();
+//    /EscServo();
     delay(15);
     line_follower();
     Serial.println("Line Following Mode Running......");
@@ -115,35 +117,73 @@ void line_follower()
   int s1 = analogRead(A7);
   int s2 = analogRead(A6);
   int s3 = analogRead(A5);
-  int s4 = analogRead(A4);
-  int s5 = analogRead(A3);
+  // int s4 = analogRead(A4);
+  // int s5 = analogRead(A3);
   Serial.print(s1);
   Serial.print(" ");
   Serial.print(s2);
   Serial.print(" ");
   Serial.print(s3);
-  Serial.print(" ");
-  Serial.print(s4);
-  Serial.print(" ");
-  Serial.print(s5);
+  // Serial.print(" ");
+  // Serial.print(s4);
+  // Serial.print(" ");
+  // Serial.print(s5);
   Serial.println(" ");
+
 }
 
 
 // Panel Cleaning Mode
 void clean_panel() {
+  // Track the timer
+  currentMillis = millis();
+  
   // Code for Cleaning the Solar Panel
-  if (panelMode == 1) {
+  if (panelModeCount == 1) {
+    Serial.print("Forward in Panel Mode.........");
+    Serial.println(panelModeCount);
     forward(255, 255);
+    countEndFlag = 0;
   }
-  else if (panelMode == -1) {
+  else if (panelModeCount == 2) {
+    Serial.print("Right in Panel Mode.........");
+    Serial.println(panelModeCount);
+    right(255);
+    countEndFlag = 0;
+  }
+  else if (panelModeCount == 3) {
+    Serial.print("Left in Panel Mode........");
+    Serial.print(panelModeCount);
+    left(255);
+    countEndFlag = 0;
+  }
+  else if (panelModeCount == 4) {
+    Serial.print("Backward in Panel Mode........");
+    Serial.print(panelModeCount);
     backward(255, 255);
+    countEndFlag = 1;
   }
 
   // Changing the panelMode
-  if (currentMillis - previousMillis >= interval) {
-    panelMode = panelMode * -1;
+  Serial.print("Current Millis = ");
+  Serial.println(currentMillis);
+  Serial.print("Previous Millis = ");
+  Serial.println(previousMillis);
+  unsigned long time_past = currentMillis - previousMillis;
+  Serial.print("Time Past = ");
+  Serial.println(time_past);
+  if (time_past >= interval) {
     previousMillis = currentMillis;
+    Serial.print("Previous Millis changed to = ");
+    Serial.println(previousMillis);
+
+    // To make sure that the count cycle is restarted again for the next phase....
+    if (countEndFlag == 1) {
+      panelModeCount = 0;
+    }
+    panelModeCount = panelModeCount + 1;
+    Serial.print("PANEL MODE COUNT CHANGED  TO = ");
+    Serial.println(panelModeCount);
   }
 }
 
@@ -174,26 +214,26 @@ void backward(int LM_PWM, int RM_PWM)
   analogWrite(RM_Enable, RM_PWM);
 }
 
-void right(int LM_PWM, int RM_PWM)
+void right(int PWM)
 {
   digitalWrite(LM1, 1);
   digitalWrite(LM2, 0);
-  digitalWrite(RM1, 1);
+  digitalWrite(RM1, 0);
   digitalWrite(RM2, 1);
 
-  analogWrite(LM_Enable, LM_PWM);
-  analogWrite(RM_Enable, RM_PWM);
+  analogWrite(LM_Enable, PWM);
+  analogWrite(RM_Enable, PWM);
 }
 
-void left(int LM_PWM, int RM_PWM)
+void left(int PWM)
 {
-  digitalWrite(LM1, 1);
+  digitalWrite(LM1, 0);
   digitalWrite(LM2, 1);
   digitalWrite(RM1, 1);
   digitalWrite(RM2, 0);
 
-  analogWrite(LM_Enable, LM_PWM);
-  analogWrite(RM_Enable, RM_PWM);
+  analogWrite(LM_Enable, PWM);
+  analogWrite(RM_Enable, PWM);
 }
 
 void stop_bot()
