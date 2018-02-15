@@ -1,14 +1,14 @@
-.uint8_t LM1 = 7;
-uint8_t LM2 = 8;
-uint8_t RM1 = 12;
-uint8_t RM2 = 10;
-uint8_t LM_Enable = 6;
-uint8_t RM_Enable = 11;
+uint8_t RM1 = 23;
+uint8_t RM2 = 22;
+uint8_t LM1 = 31;
+uint8_t LM2 = 25;
+uint8_t LM_Enable = 8;
+uint8_t RM_Enable = 7;
 
-uint8_t Servo_Pin = 9;
+uint8_t Servo_Pin = 6;
 
-uint8_t digitalPin1 = 2;    // For LineFollower
-uint8_t digitalPin2 = 13;   // For Cleaning Solar Panel
+uint8_t digitalPin1 = 52;    // For LineFollower
+uint8_t digitalPin2 = 53;   // For Cleaning Solar Panel
 
 uint8_t MODE = 0;           // To decide the mode in which the robot operates
 
@@ -17,6 +17,30 @@ const long interval = 1500;         // Interval the robot to move forward and ba
 unsigned long currentMillis;
 int panelModeCount = 0;                  // For going changing the operation in the Panel Clean Mode
 int countEndFlag = 0;                    // To determine whether the count cycle is over and needs to restart again or not.
+
+
+// For line following mode
+int lineFollowingMode = 0;
+uint8_t RR1 = 0;
+uint8_t GG1 = 0;
+uint8_t BB1 = 0;
+uint8_t RR2 = 0;
+uint8_t GG2 = 0;
+uint8_t BB2 = 0;
+int frequency = 0;
+
+// Sensor Pins
+uint8_t AS0 = 44;
+uint8_t AS1 = 46;
+uint8_t AS22 = 48;
+uint8_t AS3 = 50;
+uint8_t AOutput = 42;
+
+uint8_t BS0 = 45;
+uint8_t BS1 = 47;
+uint8_t BS2 = 49;
+uint8_t BS3 = 51;
+uint8_t BOutput = 43;
 
 #include <Servo.h>
 Servo myservo;
@@ -37,12 +61,31 @@ void setup() {
   pinMode(digitalPin1, INPUT);
   pinMode(digitalPin2, INPUT);
   MODE = 0;   // For STOP MODE
-  
 
+  // Setting up the pins for the sensor
+  pinMode(AS0, OUTPUT);
+  pinMode(AS1, OUTPUT);
+  pinMode(AS22, OUTPUT);
+  pinMode(AS3, OUTPUT);
+  pinMode(AOutput, INPUT);
+
+  pinMode(BS0, OUTPUT);
+  pinMode(BS1, OUTPUT);
+  pinMode(BS2, OUTPUT);
+  pinMode(BS3, OUTPUT);
+  pinMode(BOutput, INPUT);
+
+  // Setting frequency-scaling to 20%
+  digitalWrite(AS0,HIGH);
+  digitalWrite(AS1,LOW);
+  delay(100);
+  digitalWrite(BS0,HIGH);
+  digitalWrite(BS1,LOW);
+  
   myservo.attach(Servo_Pin);
   myservo.write(pos);
   
-  esc.attach(3);
+  esc.attach(5);
   esc.writeMicroseconds(300);
   delay(2000);
   
@@ -90,6 +133,7 @@ void decide_Mode() {
   if (MODE == 1) {
 //    /EscServo();
     delay(15);
+    lineFollowingMode = 0;
     line_follower();
     Serial.println("Line Following Mode Running......");
   }
@@ -114,22 +158,89 @@ void decide_Mode() {
 void line_follower()
 {
   // Code for Line Follower
-  int s1 = analogRead(A7);
-  int s2 = analogRead(A6);
-  int s3 = analogRead(A5);
-  // int s4 = analogRead(A4);
-  // int s5 = analogRead(A3);
-  Serial.print(s1);
+  findColor(AS0, AS1, AS22, AS3, AOutput, 1);  // For the first sensor
+  Serial.print(RR1);
   Serial.print(" ");
-  Serial.print(s2);
+  Serial.print(GG1);
   Serial.print(" ");
-  Serial.print(s3);
-  // Serial.print(" ");
-  // Serial.print(s4);
-  // Serial.print(" ");
-  // Serial.print(s5);
-  Serial.println(" ");
+  Serial.print(BB1);
+  Serial.print("  -- --  ");
+  findColor(BS0, BS1, BS2, BS3, BOutput, 2);  // For the second sensor
+  Serial.print(RR2);
+  Serial.print(" ");
+  Serial.print(GG2);
+  Serial.print(" ");
+  Serial.println(BB2);
+  if (BB1 > 50 && BB2 < 50) {
+    right(150);
+    lineFollowingMode = 3;
+  }
+  else if (BB1 < 50 && BB2 > 50) {
+    left(150);
+    lineFollowingMode = 2;
+  }
+  else if (BB1 > 50 && BB2 > 50) {
+    forward(200, 200);
+    lineFollowingMode = 1;
+  }
+  else if (BB1 < 50 && BB2 < 50) {
+    forward(200, 200);
+    lineFollowingMode = 1;
+  }
+  else {
+    if (lineFollowingMode == 1) {
+      backward(200, 200);
+    }
+    else if (lineFollowingMode == 2) {
+      right(150);
+    }
+    else {
+      left(150);
+    }
 
+  }
+}
+
+// To determine the RGB value of the color
+void findColor(uint8_t S0, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t sensorOut, uint8_t number) {
+  // Setting red filtered photodiodes to be read
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,LOW);
+  // Reading the output frequency
+  frequency = pulseIn(sensorOut, LOW);
+  if (number == 1) {
+    RR1 = frequency;  
+  }
+  else if (number == 2) {
+    RR2 = frequency;
+  }
+  //delay(100);
+
+  // Setting Green filtered photodiodes to be read
+  digitalWrite(S2,HIGH);
+  digitalWrite(S3,HIGH);
+  // Reading the output frequency
+  frequency = pulseIn(sensorOut, LOW);
+  if (number == 1) {
+    GG1 = frequency;  
+  }
+  else {
+    GG2 = frequency;
+  }
+  //delay(100);
+
+  // Setting Blue filtered photodiodes to be read
+  digitalWrite(S2,LOW);
+  digitalWrite(S3,HIGH);
+  // Reading the output frequency
+  frequency = pulseIn(sensorOut, LOW);
+  if (number == 1) {
+    BB1 = frequency;  
+  }
+  else {
+    BB2 = frequency;
+  }
+  //delay(100);
 }
 
 

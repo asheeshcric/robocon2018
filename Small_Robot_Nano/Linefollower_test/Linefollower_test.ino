@@ -14,8 +14,27 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   int s1 = analogRead(A7);
-  Serial.println(s1);
-  
+  int s2 = analogRead(A6);
+  int s3 = analogRead(A5);
+  Serial.print(s1);
+  Serial.print(" ");
+  Serial.print(s2);
+  Serial.print(" ");
+  Serial.print(s3);
+  Serial.println(" ");  
+  int threshold = (s1+s2+s3)/3;
+  Serial.print("Threshold = ");
+  Serial.println(threshold);
+  if (s1 > threshold && s2 < threshold && s3 < threshold) {
+    Serial.println("1");
+  }
+  else if (s1 < threshold && s2 > threshold && s3 < threshold) {
+    Serial.println("2");
+  }
+  else if (s1 < threshold && s2 < threshold && s3 > threshold) {
+    Serial.println("3");
+  }
+  delay(500);
 }
 
 //void forward(int LM_PWM, int RM_PWM)
