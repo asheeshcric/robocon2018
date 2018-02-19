@@ -13,7 +13,7 @@ uint8_t digitalPin2 = 53;   // For Cleaning Solar Panel
 uint8_t MODE = 0;           // To decide the mode in which the robot operates
 
 unsigned long previousMillis = 0;   // For timing purposes to clean the panel
-const long interval = 1500;         // Interval the robot to move forward and backward
+long interval = 2000;         // Interval the robot to move forward and backward
 unsigned long currentMillis;
 int panelModeCount = 0;                  // For going changing the operation in the Panel Clean Mode
 int countEndFlag = 0;                    // To determine whether the count cycle is over and needs to restart again or not.
@@ -21,26 +21,37 @@ int countEndFlag = 0;                    // To determine whether the count cycle
 
 // For line following mode
 int lineFollowingMode = 0;
-uint8_t RR1 = 0;
-uint8_t GG1 = 0;
-uint8_t BB1 = 0;
-uint8_t RR2 = 0;
-uint8_t GG2 = 0;
-uint8_t BB2 = 0;
+int threshold = 78;
+uint8_t L_R = 0;
+uint8_t L_G = 0;
+uint8_t L_B = 0;
+uint8_t C_R = 0;
+uint8_t C_G = 0;
+uint8_t C_B = 0;
+uint8_t R_R = 0;
+uint8_t R_G = 0;
+uint8_t R_B = 0;
 int frequency = 0;
 
 // Sensor Pins
-uint8_t AS0 = 44;
-uint8_t AS1 = 46;
-uint8_t AS22 = 48;
-uint8_t AS3 = 50;
-uint8_t AOutput = 42;
+uint8_t CS0 = 44;   // For right sensor
+uint8_t CS1 = 46;
+uint8_t CS2 = 48;
+uint8_t CS3 = 50;
+uint8_t COutput = 42;
 
-uint8_t BS0 = 45;
-uint8_t BS1 = 47;
-uint8_t BS2 = 49;
-uint8_t BS3 = 51;
-uint8_t BOutput = 43;
+uint8_t RS0 = 45;   // For centre sensor
+uint8_t RS1 = 47;
+uint8_t RS2 = 49;
+uint8_t RS3 = 51;
+uint8_t ROutput = 43;
+
+uint8_t LS0 = 41;   // For Left sensor
+uint8_t LS1 = 38;
+uint8_t LS2 = 39;
+uint8_t LS3 = 36;
+uint8_t LOutput = 40;
+
 
 #include <Servo.h>
 Servo myservo;
@@ -63,24 +74,33 @@ void setup() {
   MODE = 0;   // For STOP MODE
 
   // Setting up the pins for the sensor
-  pinMode(AS0, OUTPUT);
-  pinMode(AS1, OUTPUT);
-  pinMode(AS22, OUTPUT);
-  pinMode(AS3, OUTPUT);
-  pinMode(AOutput, INPUT);
+  pinMode(RS0, OUTPUT);
+  pinMode(RS1, OUTPUT);
+  pinMode(RS2, OUTPUT);
+  pinMode(RS3, OUTPUT);
+  pinMode(ROutput, INPUT);
 
-  pinMode(BS0, OUTPUT);
-  pinMode(BS1, OUTPUT);
-  pinMode(BS2, OUTPUT);
-  pinMode(BS3, OUTPUT);
-  pinMode(BOutput, INPUT);
+  pinMode(CS0, OUTPUT);
+  pinMode(CS1, OUTPUT);
+  pinMode(CS2, OUTPUT);
+  pinMode(CS3, OUTPUT);
+  pinMode(COutput, INPUT);
+
+  pinMode(LS0, OUTPUT);
+  pinMode(LS1, OUTPUT);
+  pinMode(LS2, OUTPUT);
+  pinMode(LS3, OUTPUT);
+  pinMode(LOutput, INPUT);
 
   // Setting frequency-scaling to 20%
-  digitalWrite(AS0,HIGH);
-  digitalWrite(AS1,LOW);
-  delay(100);
-  digitalWrite(BS0,HIGH);
-  digitalWrite(BS1,LOW);
+  digitalWrite(RS0,HIGH);
+  digitalWrite(RS1,LOW);
+  delay(10);
+  digitalWrite(CS0,HIGH);
+  digitalWrite(CS1,LOW);
+  delay(10);
+  digitalWrite(LS0, HIGH);
+  digitalWrite(LS1, LOW);
   
   myservo.attach(Servo_Pin);
   myservo.write(pos);
@@ -97,10 +117,12 @@ void setup() {
 // Main Loop Starts //
 void loop() {
   if (digitalRead(digitalPin1) == 1) {
+    stop_bot();
     MODE = 1; // Line following Mode
     Serial.println("MODE 1 Selected - Line Following Mode.........");
   }
   if (digitalRead(digitalPin2) == 1) {
+    stop_bot();
     MODE = 2; // Panel cleaning Mode
     currentMillis = millis();
     previousMillis = 0;
@@ -108,7 +130,6 @@ void loop() {
     Serial.println("MODE 2 Selected - Panel Cleaning Mode.........");
   }
   decide_Mode();    // Operating the robot according to the MODE setup
-  
 }
 // Main Loop Ends //
 
@@ -131,11 +152,11 @@ void EscServo() {
 // Function that defines the operation of the robot according to the MODE
 void decide_Mode() {
   if (MODE == 1) {
-//    /EscServo();
+    EscServo();
     delay(15);
     lineFollowingMode = 0;
     line_follower();
-    Serial.println("Line Following Mode Running......");
+    // Serial.println("Line Following Mode Running......");
   }
   else if (MODE == 2) {
     EscServo();
@@ -144,7 +165,9 @@ void decide_Mode() {
     Serial.println("Panel Cleaning Mode Running......");
   }
   else if (MODE == 10) {
+    esc.writeMicroseconds(0);
     adjust_bot();
+    MODE = 0;
     Serial.println("Adjusting the bot on the big robot......");
   }
   else {
@@ -155,64 +178,87 @@ void decide_Mode() {
 
 
 // Line Following Mode
-void line_follower()
-{
+void line_follower() {
   // Code for Line Follower
-  findColor(AS0, AS1, AS22, AS3, AOutput, 1);  // For the first sensor
-  Serial.print(RR1);
+  findColor(LS2, LS3, LOutput, 1);  // For the third sensor
+  Serial.print(L_R);
   Serial.print(" ");
-  Serial.print(GG1);
+  Serial.print(L_G);
   Serial.print(" ");
-  Serial.print(BB1);
+  Serial.print(L_B);
   Serial.print("  -- --  ");
-  findColor(BS0, BS1, BS2, BS3, BOutput, 2);  // For the second sensor
-  Serial.print(RR2);
+  findColor(CS2, CS3, COutput, 2);  // For the centre sensor
+  Serial.print(C_R);
   Serial.print(" ");
-  Serial.print(GG2);
+  Serial.print(C_G);
   Serial.print(" ");
-  Serial.println(BB2);
-  if (BB1 > 50 && BB2 < 50) {
-    right(150);
-    lineFollowingMode = 3;
-  }
-  else if (BB1 < 50 && BB2 > 50) {
-    left(150);
-    lineFollowingMode = 2;
-  }
-  else if (BB1 > 50 && BB2 > 50) {
-    forward(200, 200);
-    lineFollowingMode = 1;
-  }
-  else if (BB1 < 50 && BB2 < 50) {
-    forward(200, 200);
-    lineFollowingMode = 1;
-  }
-  else {
-    if (lineFollowingMode == 1) {
-      backward(200, 200);
-    }
-    else if (lineFollowingMode == 2) {
-      right(150);
-    }
-    else {
-      left(150);
-    }
+  Serial.print(C_B);
+  Serial.print("  -- --  ");
+  findColor(RS2, RS3, ROutput, 3);  // For the right sensor
+  Serial.print(R_R);
+  Serial.print(" ");
+  Serial.print(R_G);
+  Serial.print(" ");
+  Serial.println(R_B);
 
-  }
+
+  // Run line follower
+  run_linefollower();
 }
 
+void run_linefollower() {
+  if (L_B > threshold && C_B < threshold && R_B > threshold) {
+     forward(100, 100);
+     lineFollowingMode = 1;
+   }
+   else if (L_B < threshold && C_B > threshold && R_B > threshold) {
+     left(180);
+     lineFollowingMode = 2;
+   }
+   else if (L_B > threshold && C_B > threshold && R_B < threshold) {
+     right(180);
+     lineFollowingMode = 3;
+   }
+   else if (L_B < threshold && C_B < threshold && R_B > threshold) {
+     left(255);
+     //delay(300);
+     lineFollowingMode = 2;
+   }
+   else if (L_B > threshold && C_B < threshold && R_B < threshold) {
+     right(255);
+     //delay(300);
+     lineFollowingMode = 3;
+   }
+   else if (L_B < threshold && C_B < threshold && R_B < threshold) {
+     forward(100, 100);
+     lineFollowingMode = 1;
+   }
+  if (L_R > 100 && L_R < 140){
+    if (C_R > 80 && C_G < 100){
+      MODE = 10;
+    }
+    else if (C_R > 100 && C_R < 140) {
+      MODE = 10;
+    }
+  }
+}
+   
+
 // To determine the RGB value of the color
-void findColor(uint8_t S0, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t sensorOut, uint8_t number) {
+void findColor(uint8_t S2, uint8_t S3, uint8_t sensorOut, uint8_t number) {
   // Setting red filtered photodiodes to be read
   digitalWrite(S2,LOW);
   digitalWrite(S3,LOW);
   // Reading the output frequency
   frequency = pulseIn(sensorOut, LOW);
   if (number == 1) {
-    RR1 = frequency;  
+    L_R = frequency;  
   }
   else if (number == 2) {
-    RR2 = frequency;
+    C_R = frequency;
+  }
+  else {
+    R_R = frequency;
   }
   //delay(100);
 
@@ -222,10 +268,13 @@ void findColor(uint8_t S0, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t sensorOut
   // Reading the output frequency
   frequency = pulseIn(sensorOut, LOW);
   if (number == 1) {
-    GG1 = frequency;  
+    L_G = frequency;  
+  }
+  else if (number == 2) {
+    C_G = frequency;
   }
   else {
-    GG2 = frequency;
+    R_G = frequency;
   }
   //delay(100);
 
@@ -235,10 +284,13 @@ void findColor(uint8_t S0, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t sensorOut
   // Reading the output frequency
   frequency = pulseIn(sensorOut, LOW);
   if (number == 1) {
-    BB1 = frequency;  
+    L_B = frequency;  
+  }
+  else if (number == 2) {
+    C_B = frequency;
   }
   else {
-    BB2 = frequency;
+    R_B = frequency;
   }
   //delay(100);
 }
@@ -253,27 +305,18 @@ void clean_panel() {
   if (panelModeCount == 1) {
     Serial.print("Forward in Panel Mode.........");
     Serial.println(panelModeCount);
-    forward(255, 255);
+    forward(100, 100);
+    interval = 2000;
     countEndFlag = 0;
   }
   else if (panelModeCount == 2) {
     Serial.print("Right in Panel Mode.........");
     Serial.println(panelModeCount);
-    right(255);
-    countEndFlag = 0;
-  }
-  else if (panelModeCount == 3) {
-    Serial.print("Left in Panel Mode........");
-    Serial.print(panelModeCount);
-    left(255);
-    countEndFlag = 0;
-  }
-  else if (panelModeCount == 4) {
-    Serial.print("Backward in Panel Mode........");
-    Serial.print(panelModeCount);
-    backward(255, 255);
+    backward(100, 100);
     countEndFlag = 1;
+    interval = 2500;
   }
+  
 
   // Changing the panelMode
   Serial.print("Current Millis = ");
@@ -301,6 +344,11 @@ void clean_panel() {
 // Robot Adjust Mode
 void adjust_bot() {
   // Code for adjusting the bot on the Big Robot
+  forward(100, 100);
+  delay(1400);
+  right(255);
+  delay(1100);
+  MODE = 0;
 }
 
 void forward(int LM_PWM, int RM_PWM)
@@ -344,6 +392,28 @@ void left(int PWM)
   digitalWrite(RM2, 0);
 
   analogWrite(LM_Enable, PWM);
+  analogWrite(RM_Enable, PWM);
+}
+
+void sharp_right(int PWM)
+{
+  digitalWrite(LM1, 1);
+  digitalWrite(LM2, 0);
+  digitalWrite(RM1, 1);
+  digitalWrite(RM2, 1);
+
+  analogWrite(LM_Enable, PWM);
+  analogWrite(RM_Enable, 0);
+}
+
+void sharp_left(int PWM)
+{
+  digitalWrite(LM1, 1);
+  digitalWrite(LM2, 1);
+  digitalWrite(RM1, 1);
+  digitalWrite(RM2, 0);
+
+  analogWrite(LM_Enable, 0);
   analogWrite(RM_Enable, PWM);
 }
 

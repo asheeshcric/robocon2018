@@ -32,6 +32,8 @@ uint8_t RM1 = 22;
 uint8_t RM2 = 31;
 uint8_t LM_Enable = 7;
 uint8_t RM_Enable = 8;
+uint8_t Forward_PWM = 100;
+
 
 uint8_t LiftM1 = 3;
 uint8_t LiftM2 = 5;
@@ -47,6 +49,7 @@ void setup() {
         pinMode(LiftM1, OUTPUT);
         pinMode(LiftM2, OUTPUT);
         pinMode(Lift_Enable, OUTPUT);
+        Forward_PWM = 100;
         Serial.begin(115200);
 #if !defined(__MIPSEL__)
         while (!Serial); // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
@@ -85,27 +88,29 @@ void loop() {
         delay(100);
         
 
-//        if(out_hat != 15)
-//        {
-//          switch(out_hat)
-//          {
-//            case 0:
-//                   Serial.println("Hat: Forward Key Pressed!");
-//                   break;
-//            case 2:
-//                   Serial.println("Hat: Right Key Pressed!");
-//                   break;
-//            case 4:
-//                   Serial.println("Hat: Backward Key Pressed!");
-//                   break;
-//            case 6:
-//                   Serial.println("Hat: Left Key Pressed!");
-//                   break;
-//            default:
-//                   Serial.println("Hat: No Key Pressed!");
-//                   break;
-//          }
-//        }
+        if(out_hat != 15)
+        {
+          switch(out_hat)
+          {
+            case 0:
+                   Serial.println("Hat: Forward Key Pressed! PWM is POWERED UP!");
+                   Forward_PWM = 200;
+                   break;
+            case 2:
+                   Serial.println("Hat: Right Key Pressed!");
+                   break;
+            case 4:
+                   Serial.println("Hat: Backward Key Pressed! PWM is POWERED DOWN!");
+                   Forward_PWM = 100;
+                   break;
+            case 6:
+                   Serial.println("Hat: Left Key Pressed!");
+                   break;
+            default:
+                   Serial.println("Hat: No Key Pressed!");
+                   break;
+          }
+        }
 //
 //        if(out_butid != 0)
 //        {
@@ -120,13 +125,6 @@ void loop() {
 //                  break;
 //          }
 //        }
-//        if(out_Z1 < 100){
-//          LiftMotor(1, 200);  // Lifts up
-//        }
-//        else if(out_Z1 > 150){
-//          LiftMotor(0, 200);  // Lifts down
-//        }
-
 
     
     if (out_X > 110 && out_X < 135 && out_Y > 110 && out_Y < 135 && out_Z1 < 50){
@@ -172,7 +170,7 @@ void loop() {
     else if (out_X > 120 && out_X < 130 && out_Y < 10 && out_Z1 > 120 && out_Z1 < 130){
       // Forward
       Serial.println("Forward");
-      forward(100, 100);
+      forward(Forward_PWM, Forward_PWM);
     }
     else if (out_X > 120 && out_X < 130 && out_Y > 200 && out_Z1 > 120 && out_Z1 < 130){
         // Backward
